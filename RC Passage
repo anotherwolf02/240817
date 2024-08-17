@@ -1,0 +1,90 @@
+import re
+from collections import Counter
+from nltk.corpus import stopwords
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.probability import FreqDist
+
+# Ensure nltk packages are downloaded (run only once)
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def clean_text(text):
+    """Remove special characters and make the text lowercase."""
+    text = re.sub(r'\s+', ' ', text)  # Replace multiple spaces with a single space
+    text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
+    return text.lower()
+
+def summarize_paragraph(paragraph):
+    """Summarize the paragraph by returning the first and last sentences."""
+    sentences = sent_tokenize(paragraph)
+    if len(sentences) < 2:
+        return paragraph  # If only one sentence, return it as is
+    return sentences[0] + " ... " + sentences[-1]
+
+def extract_keywords(text, num_keywords=10):
+    """Extract keywords from the text based on word frequency."""
+    stop_words = set(stopwords.words('english'))
+    words = word_tokenize(text)
+    words = [word for word in words if word.isalpha()]  # Remove numbers and punctuation
+    words = [word for word in words if word not in stop_words]  # Remove stopwords
+    word_freq = FreqDist(words)
+    return word_freq.most_common(num_keywords)
+
+def identify_potential_questions(paragraph):
+    """Identify sentences that could be potential questions or important details."""
+    keywords = ['according', 'suggest', 'imply', 'most likely', 'best', 'primary']
+    sentences = sent_tokenize(paragraph)
+    important_sentences = [sent for sent in sentences if any(keyword in sent.lower() for keyword in keywords)]
+    return important_sentences
+
+def analyze_passage(passage):
+    """Analyze the passage by summarizing paragraphs, extracting keywords, and identifying potential questions."""
+    print("=== LSAT RC Passage Analyzer ===\n")
+
+    paragraphs = passage.split('\n\n')  # Assume paragraphs are separated by double newlines
+
+    for i, paragraph in enumerate(paragraphs):
+        print(f"Paragraph {i+1}:")
+        cleaned_paragraph = clean_text(paragraph)
+        
+        # Summarize paragraph
+        summary = summarize_paragraph(paragraph)
+        print(f"Summary: {summary}")
+        
+        # Extract keywords
+        keywords = extract_keywords(cleaned_paragraph)
+        print(f"Keywords: {', '.join([word for word, freq in keywords])}")
+        
+        # Identify potential questions
+        potential_questions = identify_potential_questions(paragraph)
+        if potential_questions:
+            print("Potential Questions/Details:")
+            for q in potential_questions:
+                print(f"- {q}")
+        print("\n" + "-"*50 + "\n")
+
+if __name__ == "__main__":
+    # Example LSAT RC passage (replace with actual passage)
+    passage = """
+    The ancient Greeks are credited with the invention of democracy. This idea of rule by the people, 
+    although vastly different in practice from our modern systems, laid the groundwork for later developments. 
+    Athenian democracy, for example, involved direct participation from a select group of citizens, 
+    in contrast to the representative democracies of today. However, it is essential to recognize that 
+    not all inhabitants of Athens were considered citizens; women, slaves, and foreigners were excluded 
+    from political life. As such, the Greek conception of democracy was far more limited than the current 
+    understanding of the term.
+
+    In the modern era, the term democracy has evolved significantly. It now generally refers to a system 
+    in which the entire adult population has the right to vote for their representatives. This shift reflects 
+    a broader acceptance of universal human rights and the belief in the equality of all people. 
+    Nevertheless, the roots of this system are still deeply intertwined with the original Greek model, 
+    even as societies continue to refine and expand the principles of democratic governance.
+
+    It is interesting to note the different paths that various democratic systems have taken. 
+    While some countries have adopted a parliamentary system, others have chosen a presidential model. 
+    Each system has its strengths and weaknesses, and the success of a democracy often depends on how 
+    well these systems are adapted to the specific cultural and historical context of the country.
+    """
+
+    analyze_passage(passage)
